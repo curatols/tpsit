@@ -32,8 +32,8 @@
                 questa frase mi rappresenta perché io do tutto quello che ho in una relazione e amerò fino alla morte, i cigni si dice che dopo
                 che il partner muore volino piu in alto che possano e sì lasciano cadere per morire e io mi sento esattamente cosi .
 	</p>
-	<img src="gatto1.jpg" alt="foto1" width="250px">
-	<img src="gatto2.jpg" alt="foto2" width="250px">
+	<img src="foto1.jpg" alt="foto1" width="250px">
+	<img src="foto2.jpg" alt="foto2" width="250px">
 		
 </body>
 </html>
