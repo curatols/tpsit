@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aforismi di Scienziati</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .aforisma {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Aforismi di Scienziati</h1>
+
+  <div class="aforisma" id="aforisma1">
+    <p>"La misura dell'intelligenza è la capacità di cambiare." – Albert Einstein</p>
+    <button onclick="nascondiTesto('aforisma1')">Nascondi Testo</button>
+  </div>
+
+  <div class="aforisma" id="aforisma2">
+    <p>"La scienza è organizzata conoscenza." – Herbert Spencer</p>
+    <button onclick="nascondiTesto('aforisma2')">Nascondi Testo</button>
+  </div>
+
+  <div class="aforisma" id="aforisma3">
+    <p>"L'immaginazione è più importante della conoscenza." – Albert Einstein</p>
+    <button onclick="nascondiTesto('aforisma3')">Nascondi Testo</button>
+  </div>
+
+  <div class="aforisma" id="aforisma4">
+    <p>"La scienza è il grande antidoto al veleno dell'entusiasmo e della superstizione." – Adam Smith</p>
+    <button onclick="nascondiTesto('aforisma4')">Nascondi Testo</button>
+  </div>
+
+  <div class="aforisma" id="aforisma5">
+    <p>"L'arte e la scienza non possono esistere a lungo separate." – Goethe</p>
+    <button onclick="nascondiTesto('aforisma5')">Nascondi Testo</button>
+  </div>
+
+  <script>
+    function nascondiTesto(id) {
+      const elemento = document.getElementById(id);
+      elemento.style.display = "none";
+    }
+  </script>
+</body>
+</html>
