@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8"> <!-- Imposta la codifica dei caratteri -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Rende la pagina adattabile ai telefoni -->
+    <title>Memory Sequenziale</title> <!-- Titolo della pagina -->
+    
+    <!-- Stili per rendere la pagina più bella -->
+    <style>
+        /* Impostazioni generali della pagina */
+        body {
+            background: linear-gradient(to right, #ffffff, #1f52fb); /* Sfondo sfumato */
+            font-family: Arial, sans-serif; /* Tipo di carattere */
+            display: flex;
+            justify-content: center; /* Centra il contenuto */
+            align-items: center; /* Centra verticalmente */
+            height: 100vh; /* Occupa tutto lo schermo */
+        }
+        
+        /* Stile della griglia */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 colonne */
+            gap: 10px; /* Spazio tra i pulsanti */
+            width: 270px;
+        }
+
+        /* Stile dei pulsanti */
+        .grid button {
+            width: 80px;
+            height: 80px;
+            font-size: 24px;
+            border-radius: 10px; /* Angoli arrotondati */
+            border: none;
+        }
+
+        /* Stile del pulsante quando è attivo (illuminato) */
+        .active {
+            background-color: rgb(38, 0, 255);
+            box-shadow: 0 0 15px rgb(119, 0, 255);
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1>Memory Sequenziale di curss</h1> <!-- Titolo del gioco -->
+        <button id="start-btn">Inizia Gioco</button> <!-- Pulsante per iniziare -->
+        <div id="score">Punteggio: 0</div> <!-- Mostra il punteggio -->
+        <div id="game-message"></div> <!-- Messaggi per il giocatore -->
+        <div id="grid" class="grid"></div> <!-- La griglia dei pulsanti -->
+    </div>
+
+    <script>
+        // Prende gli elementi della pagina
+        const grid = document.getElementById('grid'); // La griglia
+        const startButton = document.getElementById('start-btn'); // Pulsante "Inizia Gioco"
+        const scoreDisplay = document.getElementById('score'); // Il punteggio
+        const gameMessage = document.getElementById('game-message'); // Messaggi
+        const gridSize = 3; // Dimensione della griglia (3x3)
+        
+        let sequence = []; // Sequenza da ricordare
+        let userInput = []; // Input del giocatore
+        let score = 0; // Punteggio
+        let gameActive = false; // Controllo se il gioco è attivo
+
+        // Funzione per creare la griglia di pulsanti
+        function createGrid() {
+            grid.innerHTML = ''; // Svuota la griglia prima di crearla
+            for (let i = 0; i < gridSize * gridSize; i++) { // Crea 9 pulsanti (3x3)
+                const button = document.createElement('button'); // Crea un pulsante
+                button.dataset.index = i; // Dà un numero a ogni pulsante
+                button.addEventListener('click', handleUserClick); // Aggiunge l'evento per i click
+                grid.appendChild(button); // Aggiunge il pulsante alla griglia
+            }
+        }
+
+        // Funzione per avviare il gioco
+        function startGame() {
+            score = 0; // Reset del punteggio
+            sequence = []; // Reset della sequenza
+            userInput = []; // Reset degli input del giocatore
+            gameMessage.textContent = ''; // Pulisce i messaggi
+            scoreDisplay.textContent = `Punteggio: ${score}`; // Aggiorna il punteggio
+            gameActive = true; // Il gioco parte
+            nextTurn(); // Fa partire il primo turno
+        }
+
+        // Funzione per generare la sequenza
+        function nextTurn() {
+            userInput = []; // Resetta gli input del giocatore
+            sequence.push(Math.floor(Math.random() * gridSize * gridSize)); // Aggiunge un numero casuale alla sequenza
+            playSequence(); // Mostra la sequenza al giocatore
+        }
+
+        // Funzione per mostrare la sequenza
+        function playSequence() {
+            let i = 0;
+            const interval = setInterval(() => {
+                const button = grid.children[sequence[i]]; // Prende il pulsante giusto
+                button.classList.add('active'); // Lo illumina
+                setTimeout(() => button.classList.remove('active'), 500); // Dopo 0.5 sec lo spegne
+                i++;
+                if (i === sequence.length) clearInterval(interval); // Quando la sequenza è finita, ferma il ciclo
+            }, 1000); // Ogni numero appare per 1 secondo
+        }
+
+        // Funzione per gestire i click del giocatore
+        function handleUserClick(event) {
+            if (!gameActive) return; // Se il gioco non è attivo, non fa nulla
+            const index = parseInt(event.target.dataset.index); // Prende il numero del pulsante premuto
+            userInput.push(index); // Lo salva nell'array del giocatore
+            
+            event.target.classList.add('active'); // Illumina il pulsante
+            setTimeout(() => event.target.classList.remove('active'), 500); // Dopo 0.5 sec lo spegne
+
+            checkUserInput(); // Controlla se il giocatore ha premuto giusto
+        }
+
+        // Funzione per controllare se il giocatore ha premuto i tasti giusti
+        function checkUserInput() {
+            // Se l'ultimo numero premuto è sbagliato
+            if (userInput[userInput.length - 1] !== sequence[userInput.length - 1]) {
+                gameMessage.textContent = 'Hai sbagliato! Il gioco è stato resettato.'; // Messaggio di errore
+                gameActive = false; // Il gioco si ferma
+                return;
+            }
+
+            // Se il giocatore ha ripetuto tutta la sequenza correttamente
+            if (userInput.length === sequence.length) {
+                score++; // Aumenta il punteggio
+                scoreDisplay.textContent = `Punteggio: ${score}`; // Aggiorna il punteggio sullo schermo
+                setTimeout(nextTurn, 1000); // Aspetta 1 secondo e parte un nuovo turno
+            }
+        }
+
+        // Quando si clicca su "Inizia Gioco", il gioco parte
+        startButton.addEventListener('click', () => { 
+            if (!gameActive) startGame(); 
+        });
+
+        createGrid(); // Crea la griglia quando la pagina viene caricata
+    </script>
+</body>
+</html>
