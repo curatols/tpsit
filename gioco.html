@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Hexagon Minimal</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+        }
+
+        .game-over {
+            position: absolute;
+            color: white;
+            font-size: 40px;
+            font-family: Arial, sans-serif;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            text-align: center;
+        }
+
+        .instructions {
+            position: absolute;
+            color: white;
+            font-size: 25px;
+            font-family: Arial, sans-serif;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .score {
+            position: absolute;
+            color: white;
+            font-size: 40px;
+            font-family: Arial, sans-serif;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .timer {
+            position: absolute;
+            color: white;
+            font-size: 40px;
+            font-family: Arial, sans-serif;
+            top: 5%;
+            right: 5%;
+        }
+
+        .level {
+            position: absolute;
+            color: white;
+            font-size: 30px;
+            font-family: Arial, sans-serif;
+            top: 10%;
+            right: 10%;
+        }
+
+        .game-over-image {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+    <div id="gameOverText" class="game-over">Game Over</div>
+    <div class="instructions">Usa A per muoverti a sinistra, D per muoverti a destra</div>
+    <div id="score" class="score">Punteggio: 0</div>
+    <div id="timer" class="timer">Tempo: 0.000s</div>
+    <div id="level" class="level">Livello: Base</div>
+    <img id="gameOverImage" class="game-over-image" src="pisello.png" alt="Game Over Image">
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const radius = 200;
+        const playerRadius = 30;
+        const moveSpeed = 0.1;
+        const bars = [];
+        let playerAngle = Math.PI / 2;
+        let lastSide = Math.floor((playerAngle / (Math.PI / 3)) % 6);
+        let score = 0;
+        let gameOver = false;
+        let barSpeed = 2;
+        let barInterval = 1000;
+        let lastMoveTime = Date.now();
+        let startTime = Date.now();
+        let barColorChangeTime = Date.now();
+        let currentBarColor = "red";
+        const playerImage = new Image();
+        playerImage.src = "saverio.png";
+
+        function updateScore() {
+            document.getElementById("score").textContent = "Punteggio: " + score;
+        }
+
+        function updateTimer() {
+            const elapsedTime = Date.now() - startTime;
+            const seconds = Math.floor(elapsedTime / 1000);
+            const milliseconds = Math.floor(elapsedTime % 1000);
+            document.getElementById("timer").textContent = `Tempo: ${seconds}.${milliseconds.toString().padStart(3, '0')}s`;
+        }
+
+        function changeBarColor() {
+            const timeElapsed = Date.now() - barColorChangeTime;
+            if (timeElapsed >= 5000) {
+                const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+                currentBarColor = colors[Math.floor(Math.random() * colors.length)];
+                barColorChangeTime = Date.now();
+            }
+        }
+
+        function createBar(targetPlayer = false) {
+            let angleOffset;
+            if (targetPlayer) {
+                angleOffset = playerAngle;
+            } else {
+                angleOffset = Math.floor(Math.random() * 6) * (Math.PI / 3);
+            }
+
+            const startX = Math.cos(angleOffset) * (radius + 100);
+            const startY = Math.sin(angleOffset) * (radius + 100);
+            const directionX = Math.cos(angleOffset);
+            const directionY = Math.sin(angleOffset);
+            const sideLength = radius * Math.sin(Math.PI / 6) * 1.2;
+
+            bars.push({
+                startX,
+                startY,
+                directionX,
+                directionY,
+                speed: barSpeed,
+                length: sideLength,
+                isFalling: true,
+            });
+        }
+
+        function drawCenterDesign() {
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * 0.4);
+            gradient.addColorStop(0, "rgba(255, 255, 255, 0.6)");
+            gradient.addColorStop(1, "rgba(0, 255, 255, 0.1)");
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.4, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(100, 100);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-100, -100);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(100, -100);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-100, 100);
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (gameOver) {
+                document.getElementById("gameOverText").style.display = "block";
+                document.getElementById("gameOverImage").style.display = "block";
+                const elapsedTime = Date.now() - startTime;
+                const seconds = Math.floor(elapsedTime / 1000);
+                const milliseconds = Math.floor(elapsedTime % 1000);
+                document.getElementById("gameOverText").innerHTML = `Game Over<br>Punteggio: ${score}<br>Tempo: ${seconds}.${milliseconds.toString().padStart(3, '0')}s`;
+                setTimeout(() => location.reload(), 3000);
+                return;
+            }
+
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI / 3 * i;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.fillStyle = "#222";
+            ctx.fill();
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            drawCenterDesign();
+
+            bars.forEach(bar => {
+                ctx.beginPath();
+                ctx.moveTo(bar.startX, bar.startY);
+                ctx.lineTo(bar.startX + bar.directionX * bar.length, bar.startY + bar.directionY * bar.length);
+                ctx.strokeStyle = currentBarColor;
+                ctx.lineWidth = 8;
+                ctx.stroke();
+
+                if (bar.isFalling) {
+                    bar.startX -= bar.directionX * bar.speed;
+                    bar.startY -= bar.directionY * bar.speed;
+                }
+            });
+
+            if (playerImage.complete) {
+                const playerX = Math.cos(playerAngle) * radius - playerRadius;
+                const playerY = Math.sin(playerAngle) * radius - playerRadius;
+                ctx.drawImage(playerImage, playerX, playerY, playerRadius * 2, playerRadius * 2);
+            }
+
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            let currentSide = Math.floor((playerAngle / (Math.PI / 3)) % 6);
+            if (currentSide !== lastSide) {
+                score++;
+                updateScore();
+                lastSide = currentSide;
+            }
+
+            if (isColliding()) {
+                gameOver = true;
+            }
+
+            if (Date.now() - lastMoveTime > 300) {
+                createBar(true);
+                lastMoveTime = Date.now();
+            }
+
+            updateTimer();
+            changeBarColor();
+            updateDifficulty();
+            updateLevelDisplay(); // Aggiorna la visualizzazione del livello
+
+            requestAnimationFrame(drawGame);
+        }
+
+        function isColliding() {
+            for (let bar of bars) {
+                const distance = Math.sqrt(
+                    Math.pow(Math.cos(playerAngle) * radius - bar.startX, 2) +
+                    Math.pow(Math.sin(playerAngle) * radius - bar.startY, 2)
+                );
+                if (distance < playerRadius * 2) {
+                    return true;
+                }
+
+                // Aggiungi la logica di collisione per barre
+                const barStartX = bar.startX;
+                const barStartY = bar.startY;
+                const barEndX = bar.startX + bar.directionX * bar.length;
+                const barEndY = bar.startY + bar.directionY * bar.length;
+
+                // Verifica la collisione tra la hitbox del giocatore e la barra
+                const dx = barEndX - barStartX;
+                const dy = barEndY - barStartY;
+                const playerX = Math.cos(playerAngle) * radius;
+                const playerY = Math.sin(playerAngle) * radius;
+
+                const dot = (playerX - barStartX) * dx + (playerY - barStartY) * dy;
+                const lenSq = dx * dx + dy * dy;
+                const param = Math.max(0, Math.min(1, dot / lenSq));
+                const closestX = barStartX + param * dx;
+                const closestY = barStartY + param * dy;
+                const distanceToLine = Math.sqrt(Math.pow(closestX - playerX, 2) + Math.pow(closestY - playerY, 2));
+
+                if (distanceToLine < playerRadius) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function startGame() {
+            gameOver = false;
+            playerAngle = Math.PI / 2;
+            bars.length = 0;
+            score = 0;
+            startTime = Date.now();
+            updateScore();
+            document.getElementById("gameOverText").style.display = "none";
+            document.getElementById("gameOverImage").style.display = "none";
+            drawGame();
+        }
+
+        // Funzione per aggiornare la difficoltà in base al punteggio
+        function updateDifficulty() {
+            if (score >= 100 && barSpeed === 2) {
+                barSpeed = 4;
+                barInterval = 800;
+            } else if (score >= 50 && barSpeed === 4) {
+                barSpeed = 6;
+                barInterval = 600;
+            } else if (score >= 25 && barSpeed === 6) {
+                barSpeed = 8;
+                barInterval = 500;
+            } else if (score >= 10 && barSpeed === 8) {
+                barSpeed = 10;
+                barInterval = 400;
+            }
+        }
+
+        // Funzione per aggiornare la visualizzazione del livello
+        function updateLevelDisplay() {
+            let level = "Base";
+            if (score >= 100) {
+                level = "Pazzo";
+            } else if (score >= 50) {
+                level = "Difficile";
+            } else if (score >= 25) {
+                level = "Intermedio";
+            }
+            document.getElementById("level").textContent = `Livello: ${level}`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.key === 'a' || e.key === 'A') {
+                playerAngle -= moveSpeed;
+            } else if (e.key === 'd' || e.key === 'D') {
+                playerAngle += moveSpeed;
+            }
+            lastMoveTime = Date.now();
+        });
+
+        setInterval(() => {
+            if (!gameOver) createBar();
+        }, barInterval);
+
+        playerImage.onload = () => {
+            startGame();
+        };
+    </script>
+</body>
+</html>
+
+
